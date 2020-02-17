@@ -17,9 +17,10 @@ def tracker_for_me():
     filename = '1px.png'
     ip_addr = "\""+request.remote_addr+"\""
     user_agent = "\"" + request.user_agent.string + "\""
-    print('IP Address : {}, User Agent : {}'.format(ip_addr, user_agent))
-    attrs = (ip_addr, user_agent)
-    cs.execute("INSERT INTO user (ip_addr, user_agent) VALUES (?, ?)", attrs)
+    referrer = request.referrer
+    print('IP Address : {}, User Agent : {}, Referrer : {}'.format(ip_addr, user_agent, referrer))
+    attrs = (ip_addr, user_agent, referrer)
+    cs.execute("INSERT INTO user (ip_addr, user_agent, referrer) VALUES (?, ?, ?)", attrs)
     conn.commit()
     return send_file(filename, mimetype='image/png')
 
@@ -32,7 +33,8 @@ def tracker_list_for_me():
         json_array.append({
             "id" : row[0],
             "ip_addr" : row[1],
-            "user_agent" : row[2]
+            "user_agent" : row[2],
+            "referrer" : row[3]
         })
     return render_template('tracker_list.html', datas=json_array)
 
@@ -51,7 +53,7 @@ def get_connect_db_path():
 def init_db():
     conn = sqlite3.connect(get_connect_db_path(), check_same_thread=False)
     cs = conn.cursor()
-    query = "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, ip_addr TEXT, user_agent TEXT)"
+    query = "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, ip_addr TEXT, user_agent TEXT, referrer TEXT)"
     cs.execute(query)
     return cs, conn
 

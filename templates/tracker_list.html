@@ -6,7 +6,8 @@
 </head>
 <body>
 {% for data in datas %}
-    ID : {{ data.id }} | IP : {{ data.ip_addr }} | UserAgent : {{ data.user_agent }}
+    ID : {{ data.id }} | IP : {{ data.ip_addr }} | Referrer : {{ data.referrer}} <br>
+	 UserAgent : {{ data.user_agent }}
 <br>
 {% endfor %}
 </body>
