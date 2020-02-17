@@ -58,4 +58,4 @@ def init_db():
 
 if __name__ == '__main__':
     cs, conn = init_db()
-    app.run()
+    app.run(host='0.0.0.0', port=81)
