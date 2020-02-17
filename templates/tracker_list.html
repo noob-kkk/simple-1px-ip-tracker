@@ -1,0 +1,13 @@
+<!DOCTYPE HTML>
+<html lang="kr">
+<head>
+	<meta charset="utf-8">
+	<title>Tracker List</title>
+</head>
+<body>
+{% for data in datas %}
+    ID : {{ data.id }} | IP : {{ data.ip_addr }} | UserAgent : {{ data.user_agent }}
+<br>
+{% endfor %}
+</body>
+</html>
