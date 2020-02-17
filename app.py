@@ -1,15 +1,15 @@
 from flask import Flask, render_template, request, send_file, jsonify
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+# from flask_limiter import Limiter
+# from flask_limiter.util import get_remote_address
 import sqlite3
 import os
 
 app = Flask(__name__, static_folder='static', static_url_path='')
-limiter = Limiter(
-    app,
-    key_func=get_remote_address,
-    default_limits=["200 per day", "50 per hour"]
-)
+# limiter = Limiter(
+#     app,
+#     key_func=get_remote_address,
+#     default_limits=["200 per day", "50 per hour"]
+# )
 
 
 @app.route('/tracker_for_me')
@@ -58,4 +58,4 @@ def init_db():
 
 if __name__ == '__main__':
     cs, conn = init_db()
-    app.run(host='0.0.0.0', port=81)
+    app.run(host='0.0.0.0', port=82)
