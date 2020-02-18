@@ -5,6 +5,7 @@ import sqlite3
 import os
 
 app = Flask(__name__, static_folder='static', static_url_path='')
+# # Dependency Bug in pi
 # limiter = Limiter(
 #     app,
 #     key_func=get_remote_address,
@@ -15,8 +16,8 @@ app = Flask(__name__, static_folder='static', static_url_path='')
 @app.route('/tracker_for_me')
 def tracker_for_me():
     filename = '1px.png'
-    ip_addr = "\""+request.remote_addr+"\""
-    user_agent = "\"" + request.user_agent.string + "\""
+    ip_addr = str(request.remote_addr)
+    user_agent =  str(request.user_agent.string)
     referrer = request.referrer
     print('IP Address : {}, User Agent : {}, Referrer : {}'.format(ip_addr, user_agent, referrer))
     attrs = (ip_addr, user_agent, referrer)
@@ -30,13 +31,20 @@ def tracker_list_for_me():
     cs.execute("SELECT * from user order by id desc limit 100")
     json_array = []
     for row in cs:
+        split_ip_addrs = row[1].split('.')
+        ip_addr = '.'.join(split_ip_addrs[0:3]) + '.*'
         json_array.append({
             "id" : row[0],
-            "ip_addr" : row[1],
+            "ip_addr" : ip_addr,
             "user_agent" : row[2],
             "referrer" : row[3]
         })
     return render_template('tracker_list.html', datas=json_array)
+
+
+@app.route('/my_ip')
+def my_ip():
+    return request.remote_addr
 
 
 @app.route('/')
