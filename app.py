@@ -3,9 +3,12 @@ from flask import Flask, render_template, request, send_file, jsonify
 # from flask_limiter.util import get_remote_address
 import sqlite3
 import os
+import geoip2.database
 
+
+reader = geoip2.database.Reader('./GeoLite2-City.mmdb')
 app = Flask(__name__, static_folder='static', static_url_path='')
-# # Dependency Bug in pi
+# # Dependency Error in PI...
 # limiter = Limiter(
 #     app,
 #     key_func=get_remote_address,
@@ -17,11 +20,22 @@ app = Flask(__name__, static_folder='static', static_url_path='')
 def tracker_for_me():
     filename = '1px.png'
     ip_addr = str(request.remote_addr)
-    user_agent =  str(request.user_agent.string)
+    try:
+        response = reader.city(ip_addr)
+        country = response.country.name
+        city = response.city.name
+    except Exception as e:
+        print('error in tracker_for_me : ', e)
+    user_agent = str(request.user_agent.string)
     referrer = request.referrer
-    print('IP Address : {}, User Agent : {}, Referrer : {}'.format(ip_addr, user_agent, referrer))
-    attrs = (ip_addr, user_agent, referrer)
-    cs.execute("INSERT INTO user (ip_addr, user_agent, referrer) VALUES (?, ?, ?)", attrs)
+    try: country
+    except: country = ''
+    try: city
+    except: city = ''
+    print('IP Address : {}, country : {}, city : {}'.format(ip_addr, country, city))
+    print('User Agent : {}, Referrer : {}'.format(user_agent, referrer))
+    attrs = (ip_addr, country, city, user_agent, referrer)
+    cs.execute("INSERT INTO user (ip_addr, country, city, user_agent, referrer) VALUES (?, ?, ?, ?, ?)", attrs)
     conn.commit()
     return send_file(filename, mimetype='image/png')
 
@@ -36,8 +50,10 @@ def tracker_list_for_me():
         json_array.append({
             "id" : row[0],
             "ip_addr" : ip_addr,
-            "user_agent" : row[2],
-            "referrer" : row[3]
+            "country" : row[2],
+            "city" : row[3],
+            "user_agent" : row[4],
+            "referrer" : row[5]
         })
     return render_template('tracker_list.html', datas=json_array)
 
@@ -61,7 +77,8 @@ def get_connect_db_path():
 def init_db():
     conn = sqlite3.connect(get_connect_db_path(), check_same_thread=False)
     cs = conn.cursor()
-    query = "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, ip_addr TEXT, user_agent TEXT, referrer TEXT)"
+    query = "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, " \
+            "ip_addr TEXT, country TEXT, city TEXT, user_agent TEXT, referrer TEXT)"
     cs.execute(query)
     return cs, conn
 

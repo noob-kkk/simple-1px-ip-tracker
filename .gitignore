@@ -310,3 +310,4 @@ $RECYCLE.BIN/
 # Custom
 .idea
 connect_log.db
+GeoLite2-City.mmdb

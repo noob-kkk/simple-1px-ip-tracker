@@ -26,3 +26,6 @@ curl http://example.com/my_ip
 IP Address will save : http://example.com/tracker_for_me
 
 IP Logs list on : http://example.com/tracker_list_for_me
+
+# Reference
+https://github.com/maxmind/GeoIP2-python
