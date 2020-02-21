@@ -4,6 +4,7 @@ from flask import Flask, render_template, request, send_file, jsonify
 import sqlite3
 import os
 import geoip2.database
+from datetime import datetime
 
 
 reader = geoip2.database.Reader('./GeoLite2-City.mmdb')
@@ -32,10 +33,9 @@ def tracker_for_me():
     except: country = ''
     try: city
     except: city = ''
-    print('IP Address : {}, country : {}, city : {}'.format(ip_addr, country, city))
-    print('User Agent : {}, Referrer : {}'.format(user_agent, referrer))
-    attrs = (ip_addr, country, city, user_agent, referrer)
-    cs.execute("INSERT INTO user (ip_addr, country, city, user_agent, referrer) VALUES (?, ?, ?, ?, ?)", attrs)
+    date = datetime.now()
+    attrs = (ip_addr, country, city, date, user_agent, referrer)
+    cs.execute("INSERT INTO user (ip_addr, country, city, date, user_agent, referrer) VALUES (?, ?, ?, ?, ?, ?)", attrs)
     conn.commit()
     return send_file(filename, mimetype='image/png')
 
@@ -47,13 +47,15 @@ def tracker_list_for_me():
     for row in cs:
         split_ip_addrs = row[1].split('.')
         ip_addr = '.'.join(split_ip_addrs[0:3]) + '.*'
+        # now_kst = row[4].astimezone(timezone('Asia/Seoul'))
         json_array.append({
             "id" : row[0],
             "ip_addr" : ip_addr,
             "country" : row[2],
             "city" : row[3],
-            "user_agent" : row[4],
-            "referrer" : row[5]
+            "date" : row[4],
+            "user_agent" : row[5],
+            "referrer" : row[6]
         })
     return render_template('tracker_list.html', datas=json_array)
 
@@ -78,7 +80,7 @@ def init_db():
     conn = sqlite3.connect(get_connect_db_path(), check_same_thread=False)
     cs = conn.cursor()
     query = "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, " \
-            "ip_addr TEXT, country TEXT, city TEXT, user_agent TEXT, referrer TEXT)"
+            "ip_addr TEXT, country TEXT, city TEXT, date TEXT, user_agent TEXT, referrer TEXT)"
     cs.execute(query)
     return cs, conn
 
