@@ -27,5 +27,9 @@ IP Address will save : http://example.com/tracker_for_me
 
 IP Logs list on : http://example.com/tracker_list_for_me
 
-# Reference
-https://github.com/maxmind/GeoIP2-python
+It is masking with * like '100.100.100.*'
+
+# ReferenceIP
+IP Database : https://github.com/maxmind/GeoIP2-python
+
+My Youtube Link : https://youtu.be/xMJBdjhxAwk
