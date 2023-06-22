@@ -10,6 +10,8 @@ from datetime import datetime
 
 reader = geoip2.database.Reader("./GeoLite2-City.mmdb")
 app = Flask(__name__, static_folder="static", static_url_path="")
+
+
 # # Dependency Error in PI...
 # limiter = Limiter(
 #     app,
@@ -21,7 +23,8 @@ app = Flask(__name__, static_folder="static", static_url_path="")
 @app.route("/tracker_for_me")
 def tracker_for_me():
     filename = "1px.png"
-    ip_addr = str(request.remote_addr)
+    # ip_addr = str(request.remote_addr)  # case of public ip
+    ip_addr = str(request.environ['HTTP_X_REAL_IP'])  # case of reverse proxy
     try:
         response = reader.city(ip_addr)
         country = response.country.name
@@ -50,11 +53,12 @@ def tracker_for_me():
 
 @app.route("/tracker_list_for_me")
 def tracker_list_for_me():
-    cs.execute("SELECT * from user order by id desc limit 100")
+    cs.execute("SELECT * from user order by id desc limit 500")
     json_array = []
     for row in cs:
-        split_ip_addrs = row[1].split(".")
-        ip_addr = ".".join(split_ip_addrs[0:3]) + ".*"
+        # split_ip_addrs = row[1].split(".")
+        # ip_addr = ".".join(split_ip_addrs[0:3]) + ".*"
+        ip_addr = row[1]
         # now_kst = row[4].astimezone(timezone('Asia/Seoul'))
         json_array.append(
             {
@@ -99,4 +103,4 @@ def init_db():
 
 if __name__ == "__main__":
     cs, conn = init_db()
-    app.run(host="0.0.0.0", port=82)
+    app.run(host="0.0.0.0", port=1005)
