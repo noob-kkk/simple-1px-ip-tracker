@@ -3,11 +3,17 @@
 - But it works well !!
 
 # Install & Start
+## Running with Python
 ```shell
 git clone https://github.com/whackur/simple-1px-ip-tracker
 pip install -r requirements.txt
-python app.py
 ```
+## Running with pm2 & venv
+```shell
+pm2 start app.py --interpreter ..../simple-1px-ip-tracker/.venv/bin/python
+```
+
+
 # Usage
 ## Setup 
 - Replace 'example.com' with your host.
@@ -15,11 +21,25 @@ python app.py
 ```html
 <img src="http://example.com/tracker_for_me" />
 ```
+
 ## Replace ip_addr variable
-- set your ip_addr
+- Nginx Options.
+- SET proxy_pass 
+```
+    location / {
+        proxy_redirect off;
+        proxy_pass http://localhost:8080;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Host $http_host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+```
+
+## Replace Port in app.py
 ```python
-    ip_addr = str(request.remote_addr)  # case of public ip
-    ip_addr = str(request.environ['HTTP_X_REAL_IP'])  # case of reverse proxy
+app.run(host="0.0.0.0", port=1005)
 ```
 
 ## URL Target

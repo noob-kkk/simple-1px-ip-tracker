@@ -23,8 +23,9 @@ app = Flask(__name__, static_folder="static", static_url_path="")
 @app.route("/tracker_for_me")
 def tracker_for_me():
     filename = "1px.png"
-    # ip_addr = str(request.remote_addr)  # case of public ip
-    ip_addr = str(request.environ['HTTP_X_REAL_IP'])  # case of reverse proxy
+    ip_addr = str(request.environ["HTTP_X_REAL_IP"]) or str(
+        request.remote_addr
+    )
     try:
         response = reader.city(ip_addr)
         country = response.country.name
