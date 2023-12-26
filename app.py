@@ -4,28 +4,24 @@ import os
 import geoip2.database
 from datetime import datetime
 
-# from flask_limiter import Limiter
-# from flask_limiter.util import get_remote_address
-
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 reader = geoip2.database.Reader("./GeoLite2-City.mmdb")
 app = Flask(__name__, static_folder="static", static_url_path="")
 
-
-# # Dependency Error in PI...
-# limiter = Limiter(
-#     app,
-#     key_func=get_remote_address,
-#     default_limits=["200 per day", "50 per hour"]
-# )
+limiter = Limiter(
+    get_remote_address, app=app, default_limits=["10000 per day", "1000 per minute"]
+)
 
 
-@app.route("/tracker_for_me")
-def tracker_for_me():
+@app.route("/img/<app_token>")
+def tracker_for_me(app_token):
     filename = "1px.png"
-    ip_addr = str(request.environ["HTTP_X_REAL_IP"]) or str(
-        request.remote_addr
-    )
+    try:
+        ip_addr = request.environ["HTTP_X_REAL_IP"]
+    except KeyError:
+        ip_addr = str(request.remote_addr)
     try:
         response = reader.city(ip_addr)
         country = response.country.name
@@ -43,18 +39,32 @@ def tracker_for_me():
     except:
         city = ""
     date = datetime.now()
-    attrs = (ip_addr, country, city, date, user_agent, referrer)
+    attrs = (ip_addr, country, city, date, user_agent, referrer, app_token)
     cs.execute(
-        "INSERT INTO user (ip_addr, country, city, date, user_agent, referrer) VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT INTO log (ip_addr, country, city, date, user_agent, referrer, app_token) VALUES (?, ?, ?, ?, ?, ?, ?)",
         attrs,
     )
     conn.commit()
     return send_file(filename, mimetype="image/png")
 
 
-@app.route("/tracker_list_for_me")
-def tracker_list_for_me():
-    cs.execute("SELECT * from user order by id desc limit 500")
+@app.route("/log/<app_token>", methods=["GET"])
+def tracker_list_for_me(app_token):
+    log = get_log(app_token)
+    return render_template("tracker_list.html", datas=log)
+
+
+@app.route("/log-json/<app_token>", methods=["GET"])
+def tracker_list(app_token):
+    log = get_log(app_token)
+    return jsonify(log)
+
+
+def get_log(app_token):
+    attrs = (app_token,)
+    cs.execute(
+        "SELECT * from log WHERE app_token = ? ORDER by id DESC LIMIT 1000", attrs
+    )
     json_array = []
     for row in cs:
         # split_ip_addrs = row[1].split(".")
@@ -72,7 +82,7 @@ def tracker_list_for_me():
                 "referrer": row[6],
             }
         )
-    return render_template("tracker_list.html", datas=json_array)
+    return json_array
 
 
 @app.route("/my_ip")
@@ -95,8 +105,9 @@ def init_db():
     conn = sqlite3.connect(get_connect_db_path(), check_same_thread=False)
     cs = conn.cursor()
     query = (
-        "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, "
-        "ip_addr TEXT, country TEXT, city TEXT, date TEXT, user_agent TEXT, referrer TEXT)"
+        "CREATE TABLE IF NOT EXISTS log (id INTEGER PRIMARY KEY AUTOINCREMENT, "
+        "ip_addr TEXT, country TEXT, city TEXT, date TEXT, user_agent TEXT, "
+        "referrer TEXT, app_token TEXT)"
     )
     cs.execute(query)
     return cs, conn
